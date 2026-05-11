@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="TalkHub.API/TalkHub.API.csproj" />
+  <Project Path="TalkHub.Application/TalkHub.Application.csproj" />
+  <Project Path="TalkHub.Domain/TalkHub.Domain.csproj" />
+  <Project Path="TalkHub.Infrastructure/TalkHub.Infrastructure.csproj" />
+</Solution>

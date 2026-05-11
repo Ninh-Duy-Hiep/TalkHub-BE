@@ -1,0 +1,9 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/TalkHub.API/obj
+/TalkHub.Application/obj
+/TalkHub.Domain/obj
+/TalkHub.Infrastructure/obj
