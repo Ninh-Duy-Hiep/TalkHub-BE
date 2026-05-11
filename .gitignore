@@ -7,3 +7,7 @@
 /TalkHub.Application/obj
 /TalkHub.Domain/obj
 /TalkHub.Infrastructure/obj
+/TalkHub.API/bin/Debug/net8.0
+/TalkHub.Application/bin/Debug/net8.0
+/TalkHub.Domain/bin/Debug/net8.0
+/TalkHub.Infrastructure/bin/Debug/net8.0

@@ -1,0 +1,13 @@
+{
+  "profiles": {
+    "TalkHub.API": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:58347;http://localhost:58348"
+    }
+  }
+}
