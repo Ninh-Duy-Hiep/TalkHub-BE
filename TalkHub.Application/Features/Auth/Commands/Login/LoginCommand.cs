@@ -42,6 +42,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, LoginResponse>
         user.RefreshToken = refreshToken;
         var days = int.Parse(_config["Jwt:RefreshTokenDurationInDays"] ?? "7");
         user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(days);
+        user.LastLoginAt = DateTime.UtcNow;
         await _userRepository.UpdateAsync(user);
 
         return new LoginResponse(accessToken, refreshToken, user.Username, user.FullName);

@@ -23,15 +23,32 @@ public class UserRepository : IUserRepository
         return await _context.Users.AsNoTracking().ToListAsync();
     }
 
-    public async Task<(IEnumerable<User> Items, int TotalCount)> GetPagedAsync(int pageNumber, int pageSize)
+    public async Task<(IEnumerable<User> Items, int TotalCount)> GetPagedAsync(string? searchTerm, bool? isActive, int pageNumber, int pageSize)
     {
-        var query = _context.Users.AsNoTracking();
-        var totalCount = await query.CountAsync();
-        var items = await query.Skip((pageNumber - 1) * pageSize)
-                              .Take(pageSize)
-                              .ToListAsync();
+        var query = _context.Users.AsNoTracking().AsQueryable();
 
-        return (items, totalCount);
+        query = query.Where(u => !u.IsDeleted);
+
+        if (isActive.HasValue)
+        {
+            query = query.Where(u => u.IsActive == isActive.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var lowerSearchTerm = searchTerm.ToLower();
+            query = query.Where(u =>
+                u.FullName.ToLower().Contains(lowerSearchTerm));
+        }
+
+        var totalCount = await query.CountAsync();
+
+        var users = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (users, totalCount);
     }
 
     public async Task AddAsync(User user)
@@ -48,7 +65,8 @@ public class UserRepository : IUserRepository
 
     public async Task DeleteAsync(User user)
     {
-        _context.Users.Remove(user);
+        user.IsDeleted = true;
+        _context.Users.Update(user);
         await _context.SaveChangesAsync();
     }
 

@@ -6,7 +6,7 @@ using BC = BCrypt.Net.BCrypt;
 
 namespace TalkHub.Application.Features.Users.Commands.CreateUser;
 
-public record CreateUserCommand(string Username, string Password, string FullName, UserRole Role) : IRequest<Guid>;
+public record CreateUserCommand(string Username, string Password, string FullName, string Email, string? PhoneNumber, UserRole Role) : IRequest<Guid>;
 
 public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Guid>
 {
@@ -28,8 +28,10 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Guid>
         {
             Id = Guid.NewGuid(),
             Username = request.Username,
+            Email = request.Email,
             PasswordHash = BC.HashPassword(request.Password),
             FullName = request.FullName,
+            PhoneNumber = request.PhoneNumber,
             Role = request.Role,
             IsActive = true,
             CreatedAt = DateTime.UtcNow

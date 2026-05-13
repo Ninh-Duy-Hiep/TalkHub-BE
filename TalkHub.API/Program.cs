@@ -57,6 +57,8 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<TalkHub.Application.Interfaces.Services.ITokenService, TalkHub.Infrastructure.Services.TokenService>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<TalkHub.Application.Interfaces.Services.ICurrentUserService, TalkHub.Infrastructure.Services.CurrentUserService>();
 
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(GetUsersQuery).Assembly));
 
@@ -74,5 +76,12 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    dbContext.Database.Migrate();
+    await DbSeeder.SeedAsync(dbContext);
+}
 
 app.Run();

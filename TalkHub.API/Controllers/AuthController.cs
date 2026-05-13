@@ -2,6 +2,8 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using TalkHub.Application.Common.Models;
 using TalkHub.Application.Features.Auth.Commands.Login;
+using TalkHub.Application.Features.Auth.Commands.Logout;
+using Microsoft.AspNetCore.Authorization;
 
 namespace TalkHub.API.Controllers;
 
@@ -28,5 +30,13 @@ public class AuthController : ControllerBase
     {
         var result = await _mediator.Send(command);
         return Ok(ApiResponse<LoginResponse>.SuccessResponse(result, "Làm mới Token thành công."));
+    }
+
+    [HttpPost("logout")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponse<string>>> Logout()
+    {
+        await _mediator.Send(new LogoutCommand());
+        return Ok(ApiResponse<string>.SuccessResponse("Đăng xuất thành công."));
     }
 }

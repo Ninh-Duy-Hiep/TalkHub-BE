@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\TalkHub.Application\TalkHub.Application.csproj" />
     <ProjectReference Include="..\TalkHub.Domain\TalkHub.Domain.csproj" />
   </ItemGroup>

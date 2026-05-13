@@ -6,7 +6,7 @@ public interface IUserRepository
 {
     Task<User?> GetByIdAsync(Guid id);
     Task<IEnumerable<User>> GetAllAsync();
-    Task<(IEnumerable<User> Items, int TotalCount)> GetPagedAsync(int pageNumber, int pageSize);
+    Task<(IEnumerable<User> Items, int TotalCount)> GetPagedAsync(string? searchTerm, bool? isActive, int pageNumber, int pageSize);
     Task AddAsync(User user);
     Task UpdateAsync(User user);
     Task DeleteAsync(User user);
