@@ -12,17 +12,47 @@ namespace TalkHub.API.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly IWebHostEnvironment _env;
+    private readonly IConfiguration _config;
 
-    public AuthController(IMediator mediator)
+    public AuthController(IMediator mediator, IWebHostEnvironment env, IConfiguration config)
     {
         _mediator = mediator;
+        _env = env;
+        _config = config;
     }
 
     [HttpPost("login")]
-    public async Task<ActionResult<ApiResponse<LoginResponse>>> Login([FromBody] LoginCommand command)
+    public async Task<ActionResult<ApiResponse<object>>> Login([FromBody] LoginCommand command)
     {
         var result = await _mediator.Send(command);
-        return Ok(ApiResponse<LoginResponse>.SuccessResponse(result, "Đăng nhập thành công."));
+
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = !_env.IsDevelopment(),
+            SameSite = _env.IsDevelopment() ? SameSiteMode.Lax : SameSiteMode.None,
+            Expires = DateTime.UtcNow.AddMinutes(15)
+        };
+
+        var refreshCookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = !_env.IsDevelopment(),
+            SameSite = _env.IsDevelopment() ? SameSiteMode.Lax : SameSiteMode.None,
+            Expires = DateTime.UtcNow.AddDays(int.Parse(_config["Jwt:RefreshTokenDurationInDays"] ?? "7"))
+        };
+
+        Response.Cookies.Append("accessToken", result.AccessToken, cookieOptions);
+        Response.Cookies.Append("refreshToken", result.RefreshToken, refreshCookieOptions);
+
+        var userInfo = new
+        {
+            Username = result.Username,
+            FullName = result.FullName,
+        };
+
+        return Ok(ApiResponse<object>.SuccessResponse(userInfo, "Đăng nhập thành công."));
     }
 
     [HttpPost("refresh-token")]
@@ -37,6 +67,18 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<ApiResponse<string>>> Logout()
     {
         await _mediator.Send(new LogoutCommand());
+
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = !_env.IsDevelopment(),
+            SameSite = _env.IsDevelopment() ? SameSiteMode.Lax : SameSiteMode.None,
+            Expires = DateTime.UtcNow.AddDays(-1)
+        };
+
+        Response.Cookies.Append("accessToken", string.Empty, cookieOptions);
+        Response.Cookies.Append("refreshToken", string.Empty, cookieOptions);
+
         return Ok(ApiResponse<string>.SuccessResponse("Đăng xuất thành công."));
     }
 }
