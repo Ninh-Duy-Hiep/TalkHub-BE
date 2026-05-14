@@ -1,43 +1,24 @@
 using MediatR;
-using TalkHub.Application.Interfaces.IRepository;
-using TalkHub.Domain.Entities;
 using TalkHub.Domain.Enums;
-using BC = BCrypt.Net.BCrypt;
 
 namespace TalkHub.Application.Features.Users.Commands.CreateUser;
 
-public record CreateUserCommand(string Username, string Password, string FullName, string Email, string? PhoneNumber, UserRole Role) : IRequest<Guid>;
+public record CreateUserCommand : IRequest<Guid>
+{ 
+    public string Username { get; init; } = null!;
+    public string Email { get; init; } = null!;
+    public string Password { get; init; } = null!;
+    public string FullName { get; init; } = null!;
+    public string? PhoneNumber { get; init; }
+    public UserRole Role { get; init; }
 
-public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Guid>
-{
-    private readonly IUserRepository _userRepository;
-
-    public CreateUserCommandHandler(IUserRepository userRepository)
+    public CreateUserCommand(string username, string password, string fullName, string email, string? phoneNumber, UserRole role)
     {
-        _userRepository = userRepository;
-    }
-
-    public async Task<Guid> Handle(CreateUserCommand request, CancellationToken cancellationToken)
-    {
-        if (await _userRepository.ExistsAsync(request.Username))
-        {
-            throw new Exception("Tên đăng nhập đã tồn tại.");
-        }
-
-        var user = new User
-        {
-            Id = Guid.NewGuid(),
-            Username = request.Username,
-            Email = request.Email,
-            PasswordHash = BC.HashPassword(request.Password),
-            FullName = request.FullName,
-            PhoneNumber = request.PhoneNumber,
-            Role = request.Role,
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        await _userRepository.AddAsync(user);
-        return user.Id;
+        Username = username?.Trim() ?? string.Empty;
+        Password = password?.Trim() ?? string.Empty;
+        FullName = fullName?.Trim() ?? string.Empty;
+        Email = email?.Trim() ?? string.Empty;
+        PhoneNumber = phoneNumber?.Trim();
+        Role = role;
     }
 }

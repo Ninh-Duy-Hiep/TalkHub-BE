@@ -1,13 +1,18 @@
+using FluentValidation;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
+using TalkHub.Application.Behaviors;
+using TalkHub.Application.Features.Users.Queries.GetUsers;
 using TalkHub.Application.Interfaces.IRepository;
 using TalkHub.Infrastructure.Persistence;
 using TalkHub.Infrastructure.Persistence.Repositories;
-using TalkHub.Application.Features.Users.Queries.GetUsers;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddValidatorsFromAssembly(typeof(TalkHub.Application.Features.Users.Commands.CreateUser.CreateUserCommandValidator).Assembly);
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
 builder.Services.AddCors(options =>
 {
@@ -75,6 +80,27 @@ builder.Services.AddAuthentication(options =>
                 context.Token = context.Request.Cookies["accessToken"];
             }
             return Task.CompletedTask;
+        },
+        OnChallenge = context =>
+        {
+            context.HandleResponse();
+            context.Response.StatusCode = 401;
+            context.Response.ContentType = "application/json";
+            
+            var response = TalkHub.Application.Common.Models.ApiResponse<object>.FailureResponse(
+                401, "Bạn không có quyền truy cập hoặc phiên đăng nhập đã hết hạn.", new List<TalkHub.Application.Common.Models.ApiError>());
+            var options = new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase };
+            return context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(response, options));
+        },
+        OnForbidden = context =>
+        {
+            context.Response.StatusCode = 403;
+            context.Response.ContentType = "application/json";
+            
+            var response = TalkHub.Application.Common.Models.ApiResponse<object>.FailureResponse(
+                403, "Bạn không có quyền thực hiện chức năng này.", new List<TalkHub.Application.Common.Models.ApiError>());
+            var options = new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase };
+            return context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(response, options));
         }
     };
 });
