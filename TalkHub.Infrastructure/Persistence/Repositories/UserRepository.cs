@@ -72,11 +72,21 @@ public class UserRepository : IUserRepository
 
     public async Task<bool> ExistsAsync(string username)
     {
-        return await _context.Users.AnyAsync(u => u.Username == username);
+        return await _context.Users.AnyAsync(u => u.Username == username && !u.IsDeleted);
     }
 
     public async Task<User?> GetByUsernameAsync(string username)
     {
         return await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
+    }
+
+    public async Task<bool> ExistsByEmailAsync(string email)
+    {
+        return await _context.Users.AnyAsync(x => x.Email == email && !x.IsDeleted);
+    }
+
+    public async Task<bool> ExistsByPhoneAsync(string phoneNumber)
+    {
+        return await _context.Users.AnyAsync(x => x.PhoneNumber == phoneNumber && !x.IsDeleted);
     }
 }

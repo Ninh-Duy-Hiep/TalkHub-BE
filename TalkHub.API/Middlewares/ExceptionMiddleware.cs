@@ -1,5 +1,7 @@
 using System.Net;
 using System.Text.Json;
+using FluentValidation;
+using Microsoft.IdentityModel.Tokens;
 using TalkHub.Application.Common.Models;
 
 namespace TalkHub.API.Middlewares;
@@ -36,15 +38,28 @@ public class ExceptionMiddleware
         var message = "Đã xảy ra lỗi hệ thống.";
         var errors = new List<ApiError>();
 
-        if (exception is KeyNotFoundException)
+        if (exception is ValidationException validationException)
+        {
+            statusCode = (int)HttpStatusCode.BadRequest;
+            message = "Dữ liệu đầu vào không hợp lệ.";
+            
+            errors = validationException.Errors
+                .Select(err => new ApiError 
+                { 
+                    Field = char.ToLowerInvariant(err.PropertyName[0]) + err.PropertyName.Substring(1),
+                    Message = err.ErrorMessage 
+                })
+                .ToList();
+        }
+        else if (exception is KeyNotFoundException)
         {
             statusCode = (int)HttpStatusCode.NotFound;
             message = "Không tìm thấy tài nguyên yêu cầu.";
         }
-        else if (exception is UnauthorizedAccessException)
+        else if (exception is UnauthorizedAccessException || exception is SecurityTokenException)
         {
             statusCode = (int)HttpStatusCode.Unauthorized;
-            message = "Bạn không có quyền truy cập.";
+            message = exception.Message ?? "Bạn không có quyền truy cập.";
         }
         else
         {

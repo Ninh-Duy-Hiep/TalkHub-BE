@@ -21,7 +21,7 @@ public class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQuery, U
     public async Task<UserDto> Handle(GetCurrentUserQuery request, CancellationToken cancellationToken)
     {
         var userId = _currentUserService.UserId ?? throw new UnauthorizedAccessException("Người dùng chưa đăng nhập.");
-        var user = await _userRepository.GetByIdAsync(userId) ?? throw new Exception("Không tìm thấy người dùng.");
+        var user = await _userRepository.GetByIdAsync(userId) ?? throw new UnauthorizedAccessException("Không tìm thấy người dùng.");
 
         return new UserDto
         {

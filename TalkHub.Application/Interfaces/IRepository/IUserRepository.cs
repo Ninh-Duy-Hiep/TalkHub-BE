@@ -12,4 +12,6 @@ public interface IUserRepository
     Task DeleteAsync(User user);
     Task<bool> ExistsAsync(string username);
     Task<User?> GetByUsernameAsync(string username);
+    Task<bool> ExistsByEmailAsync(string email);
+    Task<bool> ExistsByPhoneAsync(string phoneNumber);
 }

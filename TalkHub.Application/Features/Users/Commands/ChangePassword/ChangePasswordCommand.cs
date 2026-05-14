@@ -1,5 +1,7 @@
 using MediatR;
 using TalkHub.Application.Interfaces.IRepository;
+using FluentValidation;
+using FluentValidation.Results;
 using TalkHub.Application.Interfaces.Services;
 using BC = BCrypt.Net.BCrypt;
 
@@ -21,11 +23,11 @@ public class ChangePasswordCommandHandler : IRequestHandler<ChangePasswordComman
     public async Task<Unit> Handle(ChangePasswordCommand request, CancellationToken cancellationToken)
     {
         var userId = _currentUserService.UserId ?? throw new UnauthorizedAccessException("Người dùng chưa đăng nhập.");
-        var user = await _userRepository.GetByIdAsync(userId) ?? throw new Exception("Không tìm thấy người dùng.");
+        var user = await _userRepository.GetByIdAsync(userId) ?? throw new KeyNotFoundException("Không tìm thấy người dùng.");
 
         if (!BC.Verify(request.OldPassword, user.PasswordHash))
         {
-            throw new Exception("Mật khẩu cũ không chính xác.");
+            throw new ValidationException(new[] { new ValidationFailure("oldPassword", "Mật khẩu cũ không chính xác.") });
         }
 
         user.PasswordHash = BC.HashPassword(request.NewPassword);
