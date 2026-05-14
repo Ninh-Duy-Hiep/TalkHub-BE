@@ -30,16 +30,20 @@ public class AuthController : ControllerBase
         var cookieOptions = new CookieOptions
         {
             HttpOnly = true,
-            Secure = !_env.IsDevelopment(),
-            SameSite = _env.IsDevelopment() ? SameSiteMode.Lax : SameSiteMode.None,
+            //Secure = !_env.IsDevelopment(),
+            Secure = true,
+            //SameSite = _env.IsDevelopment() ? SameSiteMode.Lax : SameSiteMode.None,
+            SameSite = SameSiteMode.None,
             Expires = DateTime.UtcNow.AddMinutes(15)
         };
 
         var refreshCookieOptions = new CookieOptions
         {
             HttpOnly = true,
-            Secure = !_env.IsDevelopment(),
-            SameSite = _env.IsDevelopment() ? SameSiteMode.Lax : SameSiteMode.None,
+            //Secure = !_env.IsDevelopment(),
+            Secure = true,
+            //SameSite = _env.IsDevelopment() ? SameSiteMode.Lax : SameSiteMode.None,
+            SameSite = SameSiteMode.None,
             Expires = DateTime.UtcNow.AddDays(int.Parse(_config["Jwt:RefreshTokenDurationInDays"] ?? "7"))
         };
 
