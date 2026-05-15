@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using TalkHub.Application.Common.Models;
 using TalkHub.Application.Features.Auth.Commands.Login;
 using TalkHub.Application.Features.Auth.Commands.Logout;
+using TalkHub.Application.Features.Auth.Commands.RefreshToken;
 using Microsoft.AspNetCore.Authorization;
 
 namespace TalkHub.API.Controllers;
@@ -26,29 +27,7 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<ApiResponse<object>>> Login([FromBody] LoginCommand command)
     {
         var result = await _mediator.Send(command);
-
-        var cookieOptions = new CookieOptions
-        {
-            HttpOnly = true,
-            //Secure = !_env.IsDevelopment(),
-            Secure = true,
-            //SameSite = _env.IsDevelopment() ? SameSiteMode.Lax : SameSiteMode.None,
-            SameSite = SameSiteMode.None,
-            Expires = DateTime.UtcNow.AddMinutes(15)
-        };
-
-        var refreshCookieOptions = new CookieOptions
-        {
-            HttpOnly = true,
-            //Secure = !_env.IsDevelopment(),
-            Secure = true,
-            //SameSite = _env.IsDevelopment() ? SameSiteMode.Lax : SameSiteMode.None,
-            SameSite = SameSiteMode.None,
-            Expires = DateTime.UtcNow.AddDays(int.Parse(_config["Jwt:RefreshTokenDurationInDays"] ?? "7"))
-        };
-
-        Response.Cookies.Append("accessToken", result.AccessToken, cookieOptions);
-        Response.Cookies.Append("refreshToken", result.RefreshToken, refreshCookieOptions);
+        SetTokenCookies(result.AccessToken, result.RefreshToken);
 
         var userInfo = new
         {
@@ -60,10 +39,19 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("refresh-token")]
-    public async Task<ActionResult<ApiResponse<LoginResponse>>> RefreshToken([FromBody] TalkHub.Application.Features.Auth.Commands.RefreshToken.RefreshTokenCommand command)
+    public async Task<ActionResult<ApiResponse<object>>> RefreshToken([FromBody] RefreshTokenCommand command)
     {
-        var result = await _mediator.Send(command);
-        return Ok(ApiResponse<LoginResponse>.SuccessResponse(result, "Làm mới Token thành công."));
+        var accessToken = command.AccessToken ?? Request.Cookies["accessToken"];
+        var refreshToken = command.RefreshToken ?? Request.Cookies["refreshToken"];
+
+        var result = await _mediator.Send(new RefreshTokenCommand(accessToken, refreshToken));
+        
+        SetTokenCookies(result.AccessToken, result.RefreshToken);
+
+        return Ok(ApiResponse<object>.SuccessResponse(new { 
+            Username = result.Username, 
+            FullName = result.FullName 
+        }, "Làm mới Token thành công."));
     }
 
     [HttpPost("logout")]
@@ -71,18 +59,46 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<ApiResponse<string>>> Logout()
     {
         await _mediator.Send(new LogoutCommand());
+        RemoveTokenCookies();
+        return Ok(ApiResponse<string>.SuccessResponse("Đăng xuất thành công."));
+    }
 
+    private void SetTokenCookies(string accessToken, string refreshToken)
+    {
         var cookieOptions = new CookieOptions
         {
             HttpOnly = true,
-            Secure = !_env.IsDevelopment(),
-            SameSite = _env.IsDevelopment() ? SameSiteMode.Lax : SameSiteMode.None,
-            Expires = DateTime.UtcNow.AddDays(-1)
+            Secure = true,
+            SameSite = SameSiteMode.None,
+            Expires = DateTime.UtcNow.AddMinutes(int.Parse(_config["Jwt:TokenDurationInMinutes"] ?? "15")),
+            Path = "/"
         };
 
-        Response.Cookies.Append("accessToken", string.Empty, cookieOptions);
-        Response.Cookies.Append("refreshToken", string.Empty, cookieOptions);
+        var refreshCookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.None,
+            Expires = DateTime.UtcNow.AddDays(int.Parse(_config["Jwt:RefreshTokenDurationInDays"] ?? "7")),
+            Path = "/"
+        };
 
-        return Ok(ApiResponse<string>.SuccessResponse("Đăng xuất thành công."));
+        Response.Cookies.Append("accessToken", accessToken, cookieOptions);
+        Response.Cookies.Append("refreshToken", refreshToken, refreshCookieOptions);
+    }
+
+    private void RemoveTokenCookies()
+    {
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.None,
+            Expires = DateTime.UtcNow.AddDays(-1),
+            Path = "/"
+        };
+
+        Response.Cookies.Delete("accessToken", cookieOptions);
+        Response.Cookies.Delete("refreshToken", cookieOptions);
     }
 }
