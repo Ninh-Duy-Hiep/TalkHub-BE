@@ -80,13 +80,13 @@ public class UserRepository : IUserRepository
         return await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
     }
 
-    public async Task<bool> ExistsByEmailAsync(string email)
+    public async Task<bool> ExistsByEmailAsync(string email, Guid? excludeId = null)
     {
-        return await _context.Users.AnyAsync(x => x.Email == email && !x.IsDeleted);
+        return await _context.Users.AnyAsync(x => x.Email == email && !x.IsDeleted && x.Id != excludeId);
     }
 
-    public async Task<bool> ExistsByPhoneAsync(string phoneNumber)
+    public async Task<bool> ExistsByPhoneAsync(string phoneNumber, Guid? excludeId = null)
     {
-        return await _context.Users.AnyAsync(x => x.PhoneNumber == phoneNumber && !x.IsDeleted);
+        return await _context.Users.AnyAsync(x => x.PhoneNumber == phoneNumber && !x.IsDeleted && x.Id != excludeId);
     }
 }

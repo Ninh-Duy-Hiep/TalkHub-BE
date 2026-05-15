@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,6 +30,7 @@ namespace TalkHub.Application.Features.Users.Commands.CreateUser
                 PasswordHash = BC.HashPassword(request.Password),
                 FullName = request.FullName,
                 PhoneNumber = request.PhoneNumber,
+                AvatarUrl = request.AvatarUrl,
                 Role = request.Role,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow

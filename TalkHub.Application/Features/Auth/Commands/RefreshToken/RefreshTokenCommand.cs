@@ -3,18 +3,19 @@ using MediatR;
 using TalkHub.Application.Features.Auth.Commands.Login;
 using TalkHub.Application.Interfaces.IRepository;
 using TalkHub.Application.Interfaces.Services;
+using Microsoft.Extensions.Configuration;
 
 namespace TalkHub.Application.Features.Auth.Commands.RefreshToken;
 
-public record RefreshTokenCommand(string AccessToken, string RefreshToken) : IRequest<LoginResponse>;
+public record RefreshTokenCommand(string? AccessToken, string? RefreshToken) : IRequest<LoginResponse>;
 
 public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, LoginResponse>
 {
     private readonly IUserRepository _userRepository;
     private readonly ITokenService _tokenService;
-    private readonly Microsoft.Extensions.Configuration.IConfiguration _config;
+    private readonly IConfiguration _config;
 
-    public RefreshTokenCommandHandler(IUserRepository userRepository, ITokenService tokenService, Microsoft.Extensions.Configuration.IConfiguration config)
+    public RefreshTokenCommandHandler(IUserRepository userRepository, ITokenService tokenService, IConfiguration config)
     {
         _userRepository = userRepository;
         _tokenService = tokenService;
@@ -23,6 +24,16 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, L
 
     public async Task<LoginResponse> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
     {
+        if (string.IsNullOrEmpty(request.AccessToken))
+        {
+            throw new UnauthorizedAccessException("Access Token không được để trống.");
+        }
+
+        if (string.IsNullOrEmpty(request.RefreshToken))
+        {
+            throw new UnauthorizedAccessException("Refresh Token không được để trống.");
+        }
+
         var principal = _tokenService.GetPrincipalFromExpiredToken(request.AccessToken);
         var username = principal.Identity?.Name;
 

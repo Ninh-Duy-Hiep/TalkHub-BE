@@ -10,9 +10,10 @@ public record CreateUserCommand : IRequest<Guid>
     public string Password { get; init; } = null!;
     public string FullName { get; init; } = null!;
     public string? PhoneNumber { get; init; }
+    public string? AvatarUrl { get; init; }
     public UserRole Role { get; init; }
 
-    public CreateUserCommand(string username, string password, string fullName, string email, string? phoneNumber, UserRole role)
+    public CreateUserCommand(string username, string password, string fullName, string email, string? phoneNumber, UserRole role, string? avatarUrl = null)
     {
         Username = username?.Trim() ?? string.Empty;
         Password = password?.Trim() ?? string.Empty;
@@ -20,5 +21,6 @@ public record CreateUserCommand : IRequest<Guid>
         Email = email?.Trim() ?? string.Empty;
         PhoneNumber = phoneNumber?.Trim();
         Role = role;
+        AvatarUrl = avatarUrl?.Trim();
     }
 }

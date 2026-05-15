@@ -23,15 +23,11 @@ public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, PaginatedResp
         var userDtos = users.Select(u => new UserDto
         {
             Id = u.Id,
-            Username = u.Username,
-            Email = u.Email,
             FullName = u.FullName,
             Role = u.Role,
             IsActive = u.IsActive,
-            CreatedAt = u.CreatedAt,
             IsDeleted = u.IsDeleted,
             AvatarUrl = u.AvatarUrl,
-            PhoneNumber = u.PhoneNumber,
             LastLoginAt = u.LastLoginAt
         });
 

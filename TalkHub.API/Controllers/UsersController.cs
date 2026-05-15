@@ -7,7 +7,9 @@ using TalkHub.Application.Features.Users.Commands.ChangePassword;
 using TalkHub.Application.Features.Users.Commands.CreateUser;
 using TalkHub.Application.Features.Users.Commands.DeleteUser;
 using TalkHub.Application.Features.Users.Commands.UpdateProfile;
+using TalkHub.Application.Features.Users.Commands.UpdateUser;
 using TalkHub.Application.Features.Users.Queries.GetCurrentUser;
+using TalkHub.Application.Features.Users.Queries.GetUserById;
 using TalkHub.Application.Features.Users.Queries.GetUsers;
 
 namespace TalkHub.API.Controllers;
@@ -29,6 +31,14 @@ public class UsersController : ControllerBase
     {
         var response = await _mediator.Send(new GetUsersQuery(searchTerm, isActive, pageNumber, pageSize));
         return Ok(response);
+    }
+
+    [HttpGet("{id}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<ApiResponse<UserDto>>> GetUser(Guid id)
+    {
+        var response = await _mediator.Send(new GetUserByIdQuery(id));
+        return Ok(ApiResponse<UserDto>.SuccessResponse(response));
     }
 
     [HttpPost]
@@ -63,11 +73,31 @@ public class UsersController : ControllerBase
         return Ok(ApiResponse<string>.SuccessResponse("Đổi mật khẩu thành công."));
     }
 
+    [HttpPut("{id}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<ApiResponse<string>>> UpdateUser(Guid id, [FromBody] UpdateUserCommand command)
+    {
+        if (id != command.Id)
+        {
+            return BadRequest(ApiResponse<string>.FailureResponse(400, "ID không khớp."));
+        }
+        await _mediator.Send(command);
+        return Ok(ApiResponse<string>.SuccessResponse("Cập nhật người dùng thành công."));
+    }
+
     [HttpDelete("{id}")]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<ApiResponse<string>>> DeleteUser(Guid id)
     {
         await _mediator.Send(new DeleteUserCommand(id));
         return Ok(ApiResponse<string>.SuccessResponse("Xóa người dùng thành công."));
+    }
+
+    [HttpPut("{id}/reset-password")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<ApiResponse<string>>> ResetPassword(Guid id, [FromBody] string newPassword)
+    {
+        await _mediator.Send(new TalkHub.Application.Features.Users.Commands.AdminResetPassword.AdminResetPasswordCommand(id, newPassword));
+        return Ok(ApiResponse<string>.SuccessResponse("Đặt lại mật khẩu thành công."));
     }
 }
