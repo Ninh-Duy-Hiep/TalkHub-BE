@@ -63,14 +63,23 @@ public class ExceptionMiddleware
         }
         else
         {
-            errors.Add(new ApiError { Field = "System", Message = exception.Message });
+            var fullMessage = exception.Message;
+            if (exception.InnerException != null)
+            {
+                fullMessage += " | Inner Error: " + exception.InnerException.Message;
+            }
+            errors.Add(new ApiError { Field = "System", Message = fullMessage });
         }
 
         context.Response.StatusCode = statusCode;
 
         var response = ApiResponse<object>.FailureResponse(statusCode, message, errors);
         
-        var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+        var options = new JsonSerializerOptions 
+        { 
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(System.Text.Unicode.UnicodeRanges.All)
+        };
         return context.Response.WriteAsync(JsonSerializer.Serialize(response, options));
     }
 }
